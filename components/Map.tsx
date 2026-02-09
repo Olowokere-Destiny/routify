@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -177,6 +177,16 @@ export default function Map() {
             <Popup>Point {index + 1}</Popup>
           </Marker>
         ))}
+        {points.length > 1 && (
+          <Polyline
+            positions={points.map((point) => point.coordinates)}
+            pathOptions={{
+              color: "#3b82f6",
+              weight: 4,
+              opacity: 0.7,
+            }}
+          />
+        )}
       </MapContainer>
     </div>
   );
