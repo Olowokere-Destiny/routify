@@ -25,10 +25,18 @@ function MapController({ center }: { center: [number, number] }) {
   return null;
 }
 
+interface Point {
+  id: number;
+  coordinates: [number, number];
+  timestamp: number;
+}
+
 export default function Map() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [points, setPoints] = useState<Point[]>([]);
+  const [isAddingPoint, setIsAddingPoint] = useState(false);
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -75,11 +83,76 @@ export default function Map() {
     );
   }, []);
 
+  const handleAddPoint = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsAddingPoint(true);
+    const options: PositionOptions = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newPoint: Point = {
+          id: Date.now(),
+          coordinates: [latitude, longitude],
+          timestamp: Date.now(),
+        };
+        setPoints((prev) => [...prev, newPoint]);
+        setIsAddingPoint(false);
+        setLocationError(null);
+      },
+      (error) => {
+        setIsAddingPoint(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location access denied. Cannot add point.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Location information unavailable. Cannot add point.");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out. Cannot add point.");
+            break;
+          default:
+            setLocationError("An unknown error occurred. Cannot add point.");
+            break;
+        }
+      },
+      options
+    );
+  };
+
   return (
     <div className="relative h-full w-full">
       {locationError && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded shadow-lg text-sm max-w-md text-center">
           {locationError}
+        </div>
+      )}
+      <button
+        onClick={handleAddPoint}
+        disabled={isAddingPoint}
+        className="absolute top-4 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
+      >
+        {isAddingPoint ? "Getting location..." : "Add Point"}
+      </button>
+      {points.length > 0 && (
+        <div className="absolute bottom-4 left-4 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-3 max-w-xs">
+          <div className="text-sm font-semibold mb-2">Points ({points.length})</div>
+          <div className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+            {points.map((point, index) => (
+              <div key={point.id}>
+                Point {index + 1}: {point.coordinates[0].toFixed(6)}, {point.coordinates[1].toFixed(6)}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       <MapContainer
@@ -99,6 +172,11 @@ export default function Map() {
             <Popup>Your current location</Popup>
           </Marker>
         )}
+        {points.map((point, index) => (
+          <Marker key={point.id} position={point.coordinates} icon={icon}>
+            <Popup>Point {index + 1}</Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
