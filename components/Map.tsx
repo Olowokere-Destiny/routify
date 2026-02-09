@@ -37,6 +37,8 @@ export default function Map() {
   const [isLoading, setIsLoading] = useState(true);
   const [points, setPoints] = useState<Point[]>([]);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
+  const [pastStack, setPastStack] = useState<Point[][]>([]);
+  const [futureStack, setFutureStack] = useState<Point[][]>([]);
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -104,7 +106,13 @@ export default function Map() {
           coordinates: [latitude, longitude],
           timestamp: Date.now(),
         };
-        setPoints((prev) => [...prev, newPoint]);
+        setPoints((prev) => {
+          const updated = [...prev, newPoint];
+          // Save current state to past stack and clear future stack
+          setPastStack((past) => [...past, prev]);
+          setFutureStack([]);
+          return updated;
+        });
         setIsAddingPoint(false);
         setLocationError(null);
       },
@@ -129,6 +137,27 @@ export default function Map() {
     );
   };
 
+  const handleUndo = () => {
+    if (pastStack.length === 0) return;
+    
+    const previousState = pastStack[pastStack.length - 1];
+    setPastStack((past) => past.slice(0, -1));
+    setFutureStack((future) => [points, ...future]);
+    setPoints(previousState);
+  };
+
+  const handleRedo = () => {
+    if (futureStack.length === 0) return;
+    
+    const nextState = futureStack[0];
+    setPastStack((past) => [...past, points]);
+    setFutureStack((future) => future.slice(1));
+    setPoints(nextState);
+  };
+
+  const canUndo = pastStack.length > 0;
+  const canRedo = futureStack.length > 0;
+
   return (
     <div className="relative h-full w-full">
       {locationError && (
@@ -136,13 +165,31 @@ export default function Map() {
           {locationError}
         </div>
       )}
-      <button
-        onClick={handleAddPoint}
-        disabled={isAddingPoint}
-        className="absolute top-4 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
-      >
-        {isAddingPoint ? "Getting location..." : "Add Point"}
-      </button>
+      <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+        <button
+          onClick={handleUndo}
+          disabled={!canUndo}
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
+          title="Undo"
+        >
+          Undo
+        </button>
+        <button
+          onClick={handleRedo}
+          disabled={!canRedo}
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
+          title="Redo"
+        >
+          Redo
+        </button>
+        <button
+          onClick={handleAddPoint}
+          disabled={isAddingPoint}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
+        >
+          {isAddingPoint ? "Getting location..." : "Add Point"}
+        </button>
+      </div>
       {points.length > 0 && (
         <div className="absolute bottom-4 left-4 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-3 max-w-xs">
           <div className="text-sm font-semibold mb-2">Points ({points.length})</div>
