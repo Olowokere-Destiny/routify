@@ -155,47 +155,66 @@ export default function Map() {
     setPoints(nextState);
   };
 
+  const handleClearAll = () => {
+    setPoints([]);
+    setPastStack([]);
+    setFutureStack([]);
+  };
+
   const canUndo = pastStack.length > 0;
   const canRedo = futureStack.length > 0;
+  const canClear = points.length > 0;
 
   return (
     <div className="relative h-full w-full">
       {locationError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded shadow-lg text-sm max-w-md text-center">
+        <div className="absolute top-2 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-lg text-xs sm:text-sm max-w-[90%] sm:max-w-md text-center">
           {locationError}
         </div>
       )}
-      <div className="absolute top-4 right-4 z-[1000] flex gap-2">
-        <button
-          onClick={handleUndo}
-          disabled={!canUndo}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
-          title="Undo"
-        >
-          Undo
-        </button>
-        <button
-          onClick={handleRedo}
-          disabled={!canRedo}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
-          title="Redo"
-        >
-          Redo
-        </button>
-        <button
-          onClick={handleAddPoint}
-          disabled={isAddingPoint}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-colors"
-        >
-          {isAddingPoint ? "Getting location..." : "Add Point"}
-        </button>
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000] flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            title="Undo"
+          >
+            Undo
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            title="Redo"
+          >
+            Redo
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleClearAll}
+            disabled={!canClear}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            title="Clear All Points"
+          >
+            Clear
+          </button>
+          <button
+            onClick={handleAddPoint}
+            disabled={isAddingPoint}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+          >
+            {isAddingPoint ? "Getting location..." : "Add Point"}
+          </button>
+        </div>
       </div>
       {points.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-3 max-w-xs">
-          <div className="text-sm font-semibold mb-2">Points ({points.length})</div>
-          <div className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-2 sm:p-3 max-w-[calc(100%-1rem)] sm:max-w-xs">
+          <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2">Points ({points.length})</div>
+          <div className="text-[10px] sm:text-xs text-gray-600 space-y-0.5 sm:space-y-1 max-h-24 sm:max-h-32 overflow-y-auto">
             {points.map((point, index) => (
-              <div key={point.id}>
+              <div key={point.id} className="break-words">
                 Point {index + 1}: {point.coordinates[0].toFixed(6)}, {point.coordinates[1].toFixed(6)}
               </div>
             ))}
