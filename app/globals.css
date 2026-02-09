@@ -49,6 +49,15 @@
   border-color: hsl(var(--border));
 }
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
