@@ -1,9 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "./ui/drawer";
+import { Input } from "./ui/input";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
@@ -39,10 +60,20 @@ export default function Map() {
   const [isAddingPoint, setIsAddingPoint] = useState(false);
   const [pastStack, setPastStack] = useState<Point[][]>([]);
   const [futureStack, setFutureStack] = useState<Point[][]>([]);
+  const [lastSavedPointsJson, setLastSavedPointsJson] = useState<string>(() => "[]");
+  const [areaName, setAreaName] = useState("");
+  const [isSaveOpen, setIsSaveOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
   const center = userLocation || defaultCenter;
+
+  const currentSnapshotJson = useMemo(
+    () => JSON.stringify({ points, areaName }),
+    [points, areaName]
+  );
+  const hasUnsavedChanges = currentSnapshotJson !== lastSavedPointsJson;
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -84,6 +115,35 @@ export default function Map() {
       options
     );
   }, []);
+
+  // Determine if we're on mobile (for drawer vs dialog)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
+  // Warn user if they try to close/reload with unsaved changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   const handleAddPoint = () => {
     if (!navigator.geolocation) {
@@ -164,6 +224,24 @@ export default function Map() {
   const canUndo = pastStack.length > 0;
   const canRedo = futureStack.length > 0;
   const canClear = points.length > 0;
+  const canSave = points.length > 0 && areaName.trim().length > 0 && hasUnsavedChanges;
+
+  const handleSaveArea = () => {
+    if (typeof window === "undefined") return;
+    try {
+      const snapshot = {
+        name: areaName.trim(),
+        points,
+        savedAt: Date.now(),
+      };
+      const json = JSON.stringify(snapshot);
+      localStorage.setItem("geomap-saved-area", json);
+      setLastSavedPointsJson(json);
+      setIsSaveOpen(false);
+    } catch (error) {
+      console.error("Failed to save points to localStorage:", error);
+    }
+  };
 
   return (
     <div className="relative h-full w-full">
@@ -174,39 +252,130 @@ export default function Map() {
       )}
       <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000] flex flex-col sm:flex-row gap-2">
         <div className="flex gap-2">
-          <button
+          <Button
             onClick={handleUndo}
             disabled={!canUndo}
-            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
             title="Undo"
+            variant="secondary"
           >
             Undo
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleRedo}
             disabled={!canRedo}
-            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
             title="Redo"
+            variant="secondary"
           >
             Redo
-          </button>
+          </Button>
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
             onClick={handleClearAll}
             disabled={!canClear}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
             title="Clear All Points"
+            variant="destructive"
           >
             Clear
-          </button>
-          <button
+          </Button>
+          {isMobile ? (
+            <Drawer open={isSaveOpen} onOpenChange={setIsSaveOpen}>
+              <DrawerTrigger asChild>
+                <Button
+                  disabled={points.length === 0}
+                  className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
+                  variant="outline"
+                >
+                  Save Area
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Save this mapped area</DrawerTitle>
+                  <DrawerDescription>
+                    Give this mapped area a name and save it to this browser.
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-2 space-y-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span>Area name</span>
+                    <Input
+                      value={areaName}
+                      onChange={(e) => setAreaName(e.target.value)}
+                      placeholder="e.g. Morning run route"
+                    />
+                  </label>
+                </div>
+                <DrawerFooter>
+                  <Button
+                    variant="default"
+                    disabled={!canSave}
+                    onClick={handleSaveArea}
+                  >
+                    Save
+                  </Button>
+                  <DrawerClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          ) : (
+            <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  disabled={points.length === 0}
+                  className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
+                  variant="outline"
+                >
+                  Save Area
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Save this mapped area</DialogTitle>
+                  <DialogDescription>
+                    Give this mapped area a name and save it to this browser.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span>Area name</span>
+                    <Input
+                      value={areaName}
+                      onChange={(e) => setAreaName(e.target.value)}
+                      placeholder="e.g. Morning run route"
+                    />
+                  </label>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSaveOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="default"
+                    disabled={!canSave}
+                    onClick={handleSaveArea}
+                  >
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Button
             onClick={handleAddPoint}
             disabled={isAddingPoint}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm sm:text-base font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-lg transition-colors"
+            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
           >
             {isAddingPoint ? "Getting location..." : "Add Point"}
-          </button>
+          </Button>
         </div>
       </div>
       {points.length > 0 && (
