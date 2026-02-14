@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "./ui/button";
@@ -25,11 +32,23 @@ import {
   DrawerTrigger,
 } from "./ui/drawer";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Undo2,
+  Redo2,
+  Trash2,
+  Save,
+  Plus,
+  MapPin,
+  X,
+  Loader2,
+} from "lucide-react";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -53,14 +72,18 @@ interface Point {
 }
 
 export default function Map() {
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [points, setPoints] = useState<Point[]>([]);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
   const [pastStack, setPastStack] = useState<Point[][]>([]);
   const [futureStack, setFutureStack] = useState<Point[][]>([]);
-  const [lastSavedPointsJson, setLastSavedPointsJson] = useState<string>(() => "[]");
+  const [lastSavedPointsJson, setLastSavedPointsJson] = useState<string>(
+    () => "[]"
+  );
   const [areaName, setAreaName] = useState("");
   const [isSaveOpen, setIsSaveOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -102,13 +125,19 @@ export default function Map() {
             setLocationError("Location access denied. Using default location.");
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocationError("Location information unavailable. Using default location.");
+            setLocationError(
+              "Location information unavailable. Using default location."
+            );
             break;
           case error.TIMEOUT:
-            setLocationError("Location request timed out. Using default location.");
+            setLocationError(
+              "Location request timed out. Using default location."
+            );
             break;
           default:
-            setLocationError("An unknown error occurred. Using default location.");
+            setLocationError(
+              "An unknown error occurred. Using default location."
+            );
             break;
         }
       },
@@ -183,7 +212,9 @@ export default function Map() {
             setLocationError("Location access denied. Cannot add point.");
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocationError("Location information unavailable. Cannot add point.");
+            setLocationError(
+              "Location information unavailable. Cannot add point."
+            );
             break;
           case error.TIMEOUT:
             setLocationError("Location request timed out. Cannot add point.");
@@ -199,7 +230,7 @@ export default function Map() {
 
   const handleUndo = () => {
     if (pastStack.length === 0) return;
-    
+
     const previousState = pastStack[pastStack.length - 1];
     setPastStack((past) => past.slice(0, -1));
     setFutureStack((future) => [points, ...future]);
@@ -208,7 +239,7 @@ export default function Map() {
 
   const handleRedo = () => {
     if (futureStack.length === 0) return;
-    
+
     const nextState = futureStack[0];
     setPastStack((past) => [...past, points]);
     setFutureStack((future) => future.slice(1));
@@ -224,7 +255,8 @@ export default function Map() {
   const canUndo = pastStack.length > 0;
   const canRedo = futureStack.length > 0;
   const canClear = points.length > 0;
-  const canSave = points.length > 0 && areaName.trim().length > 0 && hasUnsavedChanges;
+  const canSave =
+    points.length > 0 && areaName.trim().length > 0 && hasUnsavedChanges;
 
   const handleSaveArea = () => {
     if (typeof window === "undefined") return;
@@ -246,81 +278,124 @@ export default function Map() {
   return (
     <div className="relative h-full w-full">
       {locationError && (
-        <div className="absolute top-2 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-lg text-xs sm:text-sm max-w-[90%] sm:max-w-md text-center">
-          {locationError}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-md w-[calc(100%-2rem)]">
+          <div className="bg-white rounded-lg shadow-lg px-4 py-3 flex items-start gap-3 border border-amber-200">
+            <div className="flex-1 text-sm text-gray-800">{locationError}</div>
+            <button
+              onClick={() => setLocationError(null)}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
-      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000] flex flex-col sm:flex-row gap-2">
-        <div className="flex gap-2">
+
+      {/* Floating control panel - ICON ONLY */}
+      <div className="absolute top-4 right-4 z-1000">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5">
           <Button
             onClick={handleUndo}
             disabled={!canUndo}
-            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
+            size="icon"
+            variant="ghost"
+            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             title="Undo"
-            variant="secondary"
           >
-            Undo
+            <Undo2 className="h-4 w-4" />
           </Button>
           <Button
             onClick={handleRedo}
             disabled={!canRedo}
-            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
+            size="icon"
+            variant="ghost"
+            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             title="Redo"
-            variant="secondary"
           >
-            Redo
+            <Redo2 className="h-4 w-4" />
           </Button>
-        </div>
-        <div className="flex gap-2">
+
+          <div className="w-px bg-gray-200" />
+
           <Button
             onClick={handleClearAll}
             disabled={!canClear}
-            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
-            title="Clear All Points"
-            variant="destructive"
+            size="icon"
+            variant="ghost"
+            className="h-9 w-9 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Clear all"
           >
-            Clear
+            <Trash2 className="h-4 w-4" />
           </Button>
+
           {isMobile ? (
             <Drawer open={isSaveOpen} onOpenChange={setIsSaveOpen}>
               <DrawerTrigger asChild>
                 <Button
                   disabled={points.length === 0}
-                  className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
-                  variant="outline"
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed relative"
+                  title="Save area"
                 >
-                  Save Area
+                  <Save className="h-4 w-4" />
+                  {hasUnsavedChanges && points.length > 0 && (
+                    <span className="absolute top-1 right-1 h-2 w-2 bg-blue-500 rounded-full" />
+                  )}
                 </Button>
               </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Save this mapped area</DrawerTitle>
-                  <DrawerDescription>
-                    Give this mapped area a name and save it to this browser.
-                  </DrawerDescription>
-                </DrawerHeader>
-                <div className="px-4 pb-2 space-y-2">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>Area name</span>
-                    <Input
-                      value={areaName}
-                      onChange={(e) => setAreaName(e.target.value)}
-                      placeholder="e.g. Morning run route"
-                    />
-                  </label>
+              <DrawerContent className="bg-white">
+                <div className="mx-auto w-full max-w-md px-4 pb-8">
+                  <DrawerHeader className="text-left px-0 pb-6">
+                    <div className="mx-auto w-12 h-1 bg-gray-300 rounded-full mb-8" />
+                    <DrawerTitle className="text-xl font-semibold text-gray-900">
+                      Save Mapped Area
+                    </DrawerTitle>
+                    <DrawerDescription className="text-gray-600 mt-1">
+                      Name your route to save it locally.
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="area-name-mobile"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Area Name
+                      </Label>
+                      <Input
+                        id="area-name-mobile"
+                        value={areaName}
+                        onChange={(e) => setAreaName(e.target.value)}
+                        placeholder="e.g. Morning run route"
+                        className="h-11"
+                      />
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 flex items-center gap-3">
+                      <MapPin className="h-5 w-5 text-blue-600" />
+                      <div className="text-sm text-gray-700">
+                        <span className="font-semibold">{points.length}</span>{" "}
+                        {points.length === 1 ? "point" : "points"} added
+                      </div>
+                    </div>
+                  </div>
+                  <DrawerFooter className="px-0 pt-4 gap-3">
+                    <Button
+                      disabled={!canSave}
+                      onClick={handleSaveArea}
+                      className="h-11 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Area
+                    </Button>
+                    <DrawerClose asChild>
+                      <Button variant="outline" className="h-11">
+                        Cancel
+                      </Button>
+                    </DrawerClose>
+                  </DrawerFooter>
                 </div>
-                <DrawerFooter>
-                  <Button
-                    variant="default"
-                    disabled={!canSave}
-                    onClick={handleSaveArea}
-                  >
-                    Save
-                  </Button>
-                  <DrawerClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DrawerClose>
-                </DrawerFooter>
               </DrawerContent>
             </Drawer>
           ) : (
@@ -328,28 +403,49 @@ export default function Map() {
               <DialogTrigger asChild>
                 <Button
                   disabled={points.length === 0}
-                  className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
-                  variant="outline"
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 hover:bg-green-50 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed relative"
+                  title="Save area"
                 >
-                  Save Area
+                  <Save className="h-4 w-4" />
+                  {hasUnsavedChanges && points.length > 0 && (
+                    <span className="absolute top-1 right-1 h-2 w-2 bg-blue-500 rounded-full" />
+                  )}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>
-                  <DialogTitle>Save this mapped area</DialogTitle>
-                  <DialogDescription>
-                    Give this mapped area a name and save it to this browser.
+                  <DialogTitle className="text-xl font-semibold text-gray-900">
+                    Save Mapped Area
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-600">
+                    Name your route to save it locally.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-2">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>Area name</span>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="area-name"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Area Name
+                    </Label>
                     <Input
+                      id="area-name"
                       value={areaName}
                       onChange={(e) => setAreaName(e.target.value)}
                       placeholder="e.g. Morning run route"
+                      className="h-10"
                     />
-                  </label>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3 flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    <div className="text-sm text-gray-700">
+                      <span className="font-semibold">{points.length}</span>{" "}
+                      {points.length === 1 ? "point" : "points"} added
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -359,37 +455,76 @@ export default function Map() {
                     Cancel
                   </Button>
                   <Button
-                    variant="default"
                     disabled={!canSave}
                     onClick={handleSaveArea}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
+                    <Save className="h-4 w-4 mr-2" />
                     Save
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
+
+          <div className="w-px bg-gray-200" />
+
           <Button
             onClick={handleAddPoint}
             disabled={isAddingPoint}
-            className="text-sm sm:text-base py-1.5 px-3 sm:py-2 sm:px-4"
+            size="icon"
+            variant="ghost"
+            className="h-9 w-auto hover:bg-blue-50 hover:text-blue-600 cursor-pointer px-1 flex items-center gap-x-1"
+            title="Add point"
           >
-            {isAddingPoint ? "Getting location..." : "Add Point"}
+            {isAddingPoint ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                <span>Add point</span>
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+      {/* Points list panel */}
       {points.length > 0 && (
-        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-2 sm:p-3 max-w-[calc(100%-1rem)] sm:max-w-xs">
-          <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2">Points ({points.length})</div>
-          <div className="text-[10px] sm:text-xs text-gray-600 space-y-0.5 sm:space-y-1 max-h-24 sm:max-h-32 overflow-y-auto">
-            {points.map((point, index) => (
-              <div key={point.id} className="break-words">
-                Point {index + 1}: {point.coordinates[0].toFixed(6)}, {point.coordinates[1].toFixed(6)}
+        <div className="absolute bottom-4 left-4 z-1000 max-w-sm">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-900">
+                  Points ({points.length})
+                </span>
               </div>
-            ))}
+              {hasUnsavedChanges && (
+                <span className="text-xs text-amber-600 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 bg-amber-500 rounded-full" />
+                  Unsaved
+                </span>
+              )}
+            </div>
+            <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+              {points.map((point, index) => (
+                <div
+                  key={point.id}
+                  className="text-xs bg-gray-50 rounded px-2.5 py-2 font-mono text-gray-700 border border-gray-100"
+                >
+                  <span className="font-semibold text-gray-900">
+                    #{index + 1}
+                  </span>{" "}
+                  {point.coordinates[0].toFixed(6)},{" "}
+                  {point.coordinates[1].toFixed(6)}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
+
       <MapContainer
         center={center}
         zoom={13}
@@ -423,7 +558,23 @@ export default function Map() {
           />
         )}
       </MapContainer>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f3f4f6;
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+      `}</style>
     </div>
   );
 }
-
