@@ -10,6 +10,7 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
+//@ts-expect-error file is present
 import "leaflet/dist/leaflet.css";
 import { Button } from "./ui/button";
 import {
@@ -43,6 +44,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import SavedRoutes from "./SavedRoutes";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
@@ -71,6 +73,12 @@ interface Point {
   timestamp: number;
 }
 
+interface SavedRoute {
+  name: string;
+  points: Point[];
+  savedAt: number;
+}
+
 export default function Map() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
@@ -87,6 +95,8 @@ export default function Map() {
   const [areaName, setAreaName] = useState("");
   const [isSaveOpen, setIsSaveOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [loadedRouteName, setLoadedRouteName] = useState<string | null>(null);
+  const [saveRefreshTrigger, setSaveRefreshTrigger] = useState(0);
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -250,6 +260,7 @@ export default function Map() {
     setPoints([]);
     setPastStack([]);
     setFutureStack([]);
+    setLoadedRouteName(null);
   };
 
   const canUndo = pastStack.length > 0;
@@ -268,17 +279,40 @@ export default function Map() {
       };
       const json = JSON.stringify(snapshot);
       localStorage.setItem("geomap-saved-area", json);
-      setLastSavedPointsJson(json);
+      setLastSavedPointsJson(
+        JSON.stringify({ points, areaName: areaName.trim() })
+      );
+      setSaveRefreshTrigger((prev) => prev + 1);
       setIsSaveOpen(false);
     } catch (error) {
       console.error("Failed to save points to localStorage:", error);
     }
   };
 
+  const handleLoadRoute = (route: SavedRoute) => {
+    // Clear existing data
+    setPoints([]);
+    setPastStack([]);
+    setFutureStack([]);
+
+    // Load the route
+    setPoints(route.points);
+    setAreaName(route.name);
+    setLoadedRouteName(route.name);
+    setLastSavedPointsJson(
+      JSON.stringify({ points: route.points, areaName: route.name })
+    );
+
+    // Center map on first point if available
+    if (route.points.length > 0 && userLocation) {
+      setUserLocation(route.points[0].coordinates);
+    }
+  };
+
   return (
     <div className="relative h-full w-full">
       {locationError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-md w-[calc(100%-2rem)]">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 max-w-md w-[calc(100%-2rem)]">
           <div className="bg-white rounded-lg shadow-lg px-4 py-3 flex items-start gap-3 border border-amber-200">
             <div className="flex-1 text-sm text-gray-800">{locationError}</div>
             <button
@@ -294,7 +328,7 @@ export default function Map() {
 
       {/* Floating control panel - ICON ONLY */}
       <div className="absolute top-4 right-4 z-1000">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5 relative">
           <Button
             onClick={handleUndo}
             disabled={!canUndo}
@@ -469,6 +503,13 @@ export default function Map() {
 
           <div className="w-px bg-gray-200" />
 
+          <SavedRoutes
+            onLoadRoute={handleLoadRoute}
+            refreshTrigger={saveRefreshTrigger}
+          />
+
+          <div className="w-px bg-gray-200" />
+
           <Button
             onClick={handleAddPoint}
             disabled={isAddingPoint}
@@ -488,6 +529,19 @@ export default function Map() {
           </Button>
         </div>
       </div>
+
+      {/* Loaded route indicator */}
+      {loadedRouteName && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg">
+            <MapPin className="h-4 w-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-900">
+              {loadedRouteName}
+            </span>
+            <X size={16} onClick={handleClearAll} className="cursor-pointer" />
+          </div>
+        </div>
+      )}
 
       {/* Points list panel */}
       {points.length > 0 && (
