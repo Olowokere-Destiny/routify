@@ -1,70 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../../components/ui/button";
 import {
-    MapPin,
-    Clock,
-    Trash2,
-    Eye,
-    Folder,
-    FolderOpen
+  MapPin,
+  Clock,
+  Trash2,
+  Eye,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "./ui/dialog";
-
-interface Point {
-  id: number;
-  coordinates: [number, number];
-  timestamp: number;
-}
-
-interface SavedRoute {
-  name: string;
-  points: Point[];
-  savedAt: number;
-}
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { SavedRoute } from "../../lib/types/map";
 
 interface SavedRoutesProps {
   onLoadRoute: (route: SavedRoute) => void;
   refreshTrigger?: number;
 }
 
-export default function SavedRoutes({ onLoadRoute, refreshTrigger }: SavedRoutesProps) {
-  const [savedRoute, setSavedRoute] = useState<SavedRoute | null>(() => {
-    // Initialize state directly from localStorage
-    try {
-      const saved = localStorage.getItem("geomap-saved-area");
-      if (saved) {
-        return JSON.parse(saved) as SavedRoute;
-      }
-    } catch (error) {
-      console.error("Failed to load saved route:", error);
-    }
-    return null;
-  });
-  
+export default function SavedRoutes({
+  onLoadRoute,
+  refreshTrigger,
+}: SavedRoutesProps) {
+  const [savedRoute, setSavedRoute] = useState<SavedRoute | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Load saved route from localStorage
   useEffect(() => {
-    // Refresh saved route when refreshTrigger changes
-    if (refreshTrigger === 0) return; // Skip initial render
-    
-    try {
-      const saved = localStorage.getItem("geomap-saved-area");
-      if (saved) {
-        setSavedRoute(JSON.parse(saved) as SavedRoute);
+    const loadSavedRoute = () => {
+      try {
+        const saved = localStorage.getItem("geomap-saved-area");
+        if (saved) {
+          setSavedRoute(JSON.parse(saved) as SavedRoute);
+        } else {
+          setSavedRoute(null);
+        }
+      } catch (error) {
+        console.error("Failed to load saved route:", error);
+        setSavedRoute(null);
       }
-    } catch (error) {
-      console.error("Failed to load saved route:", error);
-    }
+    };
+
+    loadSavedRoute();
   }, [refreshTrigger]);
 
   const handleViewRoute = () => {
@@ -191,8 +176,8 @@ export default function SavedRoutes({ onLoadRoute, refreshTrigger }: SavedRoutes
               Delete Route?
             </DialogTitle>
             <DialogDescription className="text-gray-600">
-              Are you sure you want to delete &quot;{savedRoute?.name}&quot;? This action
-              cannot be undone.
+              Are you sure you want to delete &quot;{savedRoute?.name}&quot;?
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

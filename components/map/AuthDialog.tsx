@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../../components/ui/button";
 import { CloudUpload } from "lucide-react";
 import {
   Dialog,
@@ -10,17 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
-interface Point {
-  id: number;
-  coordinates: [number, number];
-  timestamp: number;
+interface AuthDialogProps {
+  points: number;
 }
 
-export default function AuthDialog({ points }: { points: Point[] }) {
+export default function AuthDialog({ points }: AuthDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -53,7 +51,7 @@ export default function AuthDialog({ points }: { points: Point[] }) {
       <DialogTrigger asChild>
         <Button
           size="icon"
-          disabled={points.length === 0}
+          disabled={points === 0}
           variant="ghost"
           className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600"
           title="Cloud sync"
