@@ -191,14 +191,13 @@ export default function Map() {
     }
 
     setIsAddingPoint(true);
-    const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
-    };
-
-    navigator.geolocation.getCurrentPosition(
+    
+    // Use watchPosition briefly to force a fresh location update
+    const watchId = navigator.geolocation.watchPosition(
       (position) => {
+        // Clear the watch immediately after getting position
+        navigator.geolocation.clearWatch(watchId);
+        
         const { latitude, longitude } = position.coords;
         const newPoint: Point = {
           id: Date.now(),
@@ -212,10 +211,12 @@ export default function Map() {
           setFutureStack([]);
           return updated;
         });
+        setUserLocation([latitude, longitude]);
         setIsAddingPoint(false);
         setLocationError(null);
       },
       (error) => {
+        navigator.geolocation.clearWatch(watchId);
         setIsAddingPoint(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
@@ -234,7 +235,11 @@ export default function Map() {
             break;
         }
       },
-      options
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
   };
 
@@ -279,10 +284,8 @@ export default function Map() {
       };
       const json = JSON.stringify(snapshot);
       localStorage.setItem("geomap-saved-area", json);
-      setLastSavedPointsJson(
-        JSON.stringify({ points, areaName: areaName.trim() })
-      );
-      setSaveRefreshTrigger((prev) => prev + 1);
+      setLastSavedPointsJson(JSON.stringify({ points, areaName: areaName.trim() }));
+      setSaveRefreshTrigger(prev => prev + 1);
       setIsSaveOpen(false);
     } catch (error) {
       console.error("Failed to save points to localStorage:", error);
@@ -304,7 +307,7 @@ export default function Map() {
     );
 
     // Center map on first point if available
-    if (route.points.length > 0 && userLocation) {
+    if (route.points.length > 0) {
       setUserLocation(route.points[0].coordinates);
     }
   };
@@ -312,9 +315,9 @@ export default function Map() {
   return (
     <div className="relative h-full w-full">
       {locationError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 max-w-md w-[calc(100%-2rem)]">
+        <div className="absolute top-20 sm:top-4 left-1/2 -translate-x-1/2 z-1000 max-w-md w-[calc(100%-2rem)]">
           <div className="bg-white rounded-lg shadow-lg px-4 py-3 flex items-start gap-3 border border-amber-200">
-            <div className="flex-1 text-sm text-gray-800">{locationError}</div>
+            <div className="flex-1 text-xs sm:text-sm text-gray-800">{locationError}</div>
             <button
               onClick={() => setLocationError(null)}
               className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -327,7 +330,7 @@ export default function Map() {
       )}
 
       {/* Floating control panel - ICON ONLY */}
-      <div className="absolute top-4 right-4 z-1000">
+      <div className="absolute bottom-4 sm:top-4 sm:bottom-auto top-auto right-4 z-1000">
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5 relative">
           <Button
             onClick={handleUndo}
@@ -503,10 +506,7 @@ export default function Map() {
 
           <div className="w-px bg-gray-200" />
 
-          <SavedRoutes
-            onLoadRoute={handleLoadRoute}
-            refreshTrigger={saveRefreshTrigger}
-          />
+          <SavedRoutes onLoadRoute={handleLoadRoute} refreshTrigger={saveRefreshTrigger} />
 
           <div className="w-px bg-gray-200" />
 
@@ -538,14 +538,13 @@ export default function Map() {
             <span className="text-sm font-medium text-purple-900">
               {loadedRouteName}
             </span>
-            <X size={16} onClick={handleClearAll} className="cursor-pointer" />
           </div>
         </div>
       )}
 
       {/* Points list panel */}
       {points.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-1000 max-w-sm">
+        <div className="absolute top-20 sm:bottom-4 sm:top-auto bottom-auto left-4 z-1000 max-w-[calc(100%-2rem)] sm:max-w-sm">
           <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
