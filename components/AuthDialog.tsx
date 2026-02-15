@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Cloud } from "lucide-react";
+import { CloudUpload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,13 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
-export default function AuthDialog() {
+interface Point {
+  id: number;
+  coordinates: [number, number];
+  timestamp: number;
+}
+
+export default function AuthDialog({ points }: { points: Point[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -47,11 +53,12 @@ export default function AuthDialog() {
       <DialogTrigger asChild>
         <Button
           size="icon"
+          disabled={points.length === 0}
           variant="ghost"
           className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600"
           title="Cloud sync"
         >
-          <Cloud className="h-4 w-4" />
+          <CloudUpload className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-white">
@@ -68,7 +75,10 @@ export default function AuthDialog() {
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               Email
             </Label>
             <Input
@@ -83,7 +93,10 @@ export default function AuthDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-700"
+            >
               Password
             </Label>
             <Input

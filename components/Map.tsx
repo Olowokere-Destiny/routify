@@ -522,7 +522,7 @@ export default function Map() {
 
           <div className="w-px bg-gray-200 shrink-0" />
 
-          <AuthDialog />
+          <AuthDialog points={points} />
 
           <div className="w-px bg-gray-200 shrink-0" />
 
