@@ -116,7 +116,7 @@ export default function SavedRoutes({ onLoadRoute, refreshTrigger }: SavedRoutes
       </Button>
 
       {isOpen && (
-        <div className="absolute bottom-14 sm:top-14 sm:bottom-auto right-0 w-[calc(100vw-2rem)] sm:w-80 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+        <div className="absolute bottom-14 sm:top-14 -translate-x-1/2 left-1/2 sm:left-auto sm:translate-x-0 sm:bottom-auto right-0 w-[calc(100vw-2rem)] sm:w-80 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in slide-in-from-top-2 duration-200">
           <div className="bg-linear-to-r from-purple-50 to-blue-50 px-4 py-3 border-b border-gray-200">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <Folder className="h-4 w-4 text-purple-600" />

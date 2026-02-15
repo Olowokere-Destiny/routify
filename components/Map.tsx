@@ -45,6 +45,7 @@ import {
   Loader2,
 } from "lucide-react";
 import SavedRoutes from "./SavedRoutes";
+import AuthDialog from "./AuthDialog";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
@@ -191,13 +192,13 @@ export default function Map() {
     }
 
     setIsAddingPoint(true);
-    
+
     // Use watchPosition briefly to force a fresh location update
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         // Clear the watch immediately after getting position
         navigator.geolocation.clearWatch(watchId);
-        
+
         const { latitude, longitude } = position.coords;
         const newPoint: Point = {
           id: Date.now(),
@@ -247,18 +248,24 @@ export default function Map() {
     if (pastStack.length === 0) return;
 
     const previousState = pastStack[pastStack.length - 1];
+
+    setPoints((currentPoints) => {
+      setFutureStack((future) => [currentPoints, ...future]);
+      return previousState;
+    });
     setPastStack((past) => past.slice(0, -1));
-    setFutureStack((future) => [points, ...future]);
-    setPoints(previousState);
   };
 
   const handleRedo = () => {
     if (futureStack.length === 0) return;
 
     const nextState = futureStack[0];
-    setPastStack((past) => [...past, points]);
+
+    setPoints((currentPoints) => {
+      setPastStack((past) => [...past, currentPoints]);
+      return nextState;
+    });
     setFutureStack((future) => future.slice(1));
-    setPoints(nextState);
   };
 
   const handleClearAll = () => {
@@ -284,8 +291,10 @@ export default function Map() {
       };
       const json = JSON.stringify(snapshot);
       localStorage.setItem("geomap-saved-area", json);
-      setLastSavedPointsJson(JSON.stringify({ points, areaName: areaName.trim() }));
-      setSaveRefreshTrigger(prev => prev + 1);
+      setLastSavedPointsJson(
+        JSON.stringify({ points, areaName: areaName.trim() })
+      );
+      setSaveRefreshTrigger((prev) => prev + 1);
       setIsSaveOpen(false);
     } catch (error) {
       console.error("Failed to save points to localStorage:", error);
@@ -317,7 +326,7 @@ export default function Map() {
       {locationError && (
         <div className="absolute top-20 sm:top-4 left-1/2 -translate-x-1/2 z-1000 max-w-md w-[calc(100%-2rem)]">
           <div className="bg-white rounded-lg shadow-lg px-4 py-3 flex items-start gap-3 border border-amber-200">
-            <div className="flex-1 text-xs sm:text-sm text-gray-800">{locationError}</div>
+            <div className="flex-1 text-sm text-gray-800">{locationError}</div>
             <button
               onClick={() => setLocationError(null)}
               className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -330,14 +339,14 @@ export default function Map() {
       )}
 
       {/* Floating control panel - ICON ONLY */}
-      <div className="absolute bottom-4 sm:top-4 sm:bottom-auto top-auto right-4 z-1000">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5 relative">
+      <div className="absolute bottom-4 sm:top-4 sm:bottom-auto top-auto left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-1000">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5 relative max-w-[calc(100vw-2rem)]">
           <Button
             onClick={handleUndo}
             disabled={!canUndo}
             size="icon"
             variant="ghost"
-            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             title="Undo"
           >
             <Undo2 className="h-4 w-4" />
@@ -347,20 +356,20 @@ export default function Map() {
             disabled={!canRedo}
             size="icon"
             variant="ghost"
-            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             title="Redo"
           >
             <Redo2 className="h-4 w-4" />
           </Button>
 
-          <div className="w-px bg-gray-200" />
+          <div className="w-px bg-gray-200 shrink-0" />
 
           <Button
             onClick={handleClearAll}
             disabled={!canClear}
             size="icon"
             variant="ghost"
-            className="h-9 w-9 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             title="Clear all"
           >
             <Trash2 className="h-4 w-4" />
@@ -373,7 +382,7 @@ export default function Map() {
                   disabled={points.length === 0}
                   size="icon"
                   variant="ghost"
-                  className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed relative"
+                  className="h-9 w-9 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed relative shrink-0"
                   title="Save area"
                 >
                   <Save className="h-4 w-4" />
@@ -442,7 +451,7 @@ export default function Map() {
                   disabled={points.length === 0}
                   size="icon"
                   variant="ghost"
-                  className="h-9 w-9 hover:bg-green-50 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed relative"
+                  className="h-9 w-9 hover:bg-green-50 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed relative shrink-0"
                   title="Save area"
                 >
                   <Save className="h-4 w-4" />
@@ -504,18 +513,25 @@ export default function Map() {
             </Dialog>
           )}
 
-          <div className="w-px bg-gray-200" />
+          <div className="w-px bg-gray-200 shrink-0" />
 
-          <SavedRoutes onLoadRoute={handleLoadRoute} refreshTrigger={saveRefreshTrigger} />
+          <SavedRoutes
+            onLoadRoute={handleLoadRoute}
+            refreshTrigger={saveRefreshTrigger}
+          />
 
-          <div className="w-px bg-gray-200" />
+          <div className="w-px bg-gray-200 shrink-0" />
+
+          <AuthDialog />
+
+          <div className="w-px bg-gray-200 shrink-0" />
 
           <Button
             onClick={handleAddPoint}
             disabled={isAddingPoint}
             size="icon"
             variant="ghost"
-            className="h-9 w-auto hover:bg-blue-50 hover:text-blue-600 cursor-pointer px-1 flex items-center gap-x-1"
+            className="h-9 w-auto px-2 hover:bg-blue-50 hover:text-blue-600 shrink-0"
             title="Add point"
           >
             {isAddingPoint ? (
@@ -523,7 +539,7 @@ export default function Map() {
             ) : (
               <>
                 <Plus className="h-4 w-4" />
-                <span>Add point</span>
+                <span className="hidden sm:inline ml-1">Add point</span>
               </>
             )}
           </Button>
