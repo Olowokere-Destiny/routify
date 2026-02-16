@@ -9,7 +9,6 @@ import {
   Polyline,
 } from "react-leaflet";
 import L from "leaflet";
-//@ts-expect-error file is present
 import "leaflet/dist/leaflet.css";
 import { useMapStore } from "../../lib/store/mapStore";
 import { SavedRoute } from "../../lib/types/map";
