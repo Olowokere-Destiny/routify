@@ -13,6 +13,7 @@ import {
   HardDrive,
   Loader2,
   RefreshCw,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -221,8 +222,15 @@ export default function SavedRoutes({
 
           {error && (
             <div className="px-3 pt-3">
-              <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-                {error}
+              <div className=" mt-2 py-2 px-2 bg-red-50 border border-red-200 rounded text-xs text-red-800 flex items-start justify-between gap-2">
+                <span className="flex-1">{error}</span>
+                <button
+                  onClick={() => setError("")}
+                  className="shrink-0 hover:bg-red-100 rounded p-0.5 transition-colors"
+                  aria-label="Dismiss error"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </div>
             </div>
           )}

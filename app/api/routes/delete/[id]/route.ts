@@ -5,7 +5,7 @@ import { getUserFromToken } from '../../../../../lib/jwt';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get user from token
@@ -19,6 +19,8 @@ export async function DELETE(
       );
     }
 
+    // Await params in Next.js 15+
+    const params = await context.params;
     const routeId = params.id;
 
     if (!routeId) {
