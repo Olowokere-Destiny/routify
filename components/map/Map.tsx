@@ -21,7 +21,7 @@ import { LocationError } from "./LocationError";
 import { PointsList } from "./PointsList";
 import { RouteIndicator } from "./RouteIndicator";
 import { SaveDialog } from "./SaveDialog";
-import { Toolbar } from "./Toolbar";
+import { Toolbar } from "./ToolBar";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
@@ -58,7 +58,9 @@ export default function Map() {
   // Custom hooks
   useGeolocation();
   const handleAddPoint = useAddPoint();
-  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(setSaveRefreshTrigger);
+  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(
+    setSaveRefreshTrigger,
+  );
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -130,7 +132,7 @@ export default function Map() {
         canSave={canSave}
         hasUnsavedChanges={hasUnsavedChanges}
         isAddingPoint={isAddingPoint}
-        pointsCount={points.length}
+        points={points}
         isMobile={isMobile}
         onUndo={undo}
         onRedo={redo}

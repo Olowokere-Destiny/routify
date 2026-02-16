@@ -1,8 +1,15 @@
 import { Button } from "../../components/ui/button";
-import { Undo2, Redo2, Trash2, Save, Plus, Loader2 } from "lucide-react";
+import {
+  Undo2,
+  Redo2,
+  Trash2,
+  Save,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import SavedRoutes from "./SavedRoutes";
 import AuthDialog from "./AuthDialog";
-import { SavedRoute } from "../../lib/types/map";
+import { SavedRoute, Point } from "../../lib/types/map";
 
 interface ToolbarProps {
   canUndo: boolean;
@@ -11,7 +18,7 @@ interface ToolbarProps {
   canSave: boolean;
   hasUnsavedChanges: boolean;
   isAddingPoint: boolean;
-  pointsCount: number;
+  points: Point[]; // Change from pointsCount to points array
   isMobile: boolean;
   onUndo: () => void;
   onRedo: () => void;
@@ -26,9 +33,10 @@ export function Toolbar({
   canUndo,
   canRedo,
   canClear,
+  canSave,
   hasUnsavedChanges,
   isAddingPoint,
-  pointsCount,
+  points,
   isMobile,
   onUndo,
   onRedo,
@@ -38,7 +46,6 @@ export function Toolbar({
   saveRefreshTrigger,
   onSaveDialogOpen,
 }: ToolbarProps) {
-
   return (
     <div className="absolute bottom-4 sm:top-4 sm:bottom-auto top-auto left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-1000">
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 flex gap-1.5 relative max-w-[calc(100vw-2rem)]">
@@ -77,19 +84,17 @@ export function Toolbar({
         </Button>
 
         <Button
-          disabled={pointsCount === 0}
+          disabled={points.length === 0}
           size="icon"
           variant="ghost"
           onClick={onSaveDialogOpen}
           className={`h-9 w-9 ${
-            isMobile
-              ? "hover:bg-blue-50 hover:text-blue-600"
-              : "hover:bg-green-50 hover:text-green-600"
+            isMobile ? "hover:bg-blue-50 hover:text-blue-600" : "hover:bg-green-50 hover:text-green-600"
           } disabled:opacity-40 disabled:cursor-not-allowed relative shrink-0`}
           title="Save area"
         >
           <Save className="h-4 w-4" />
-          {hasUnsavedChanges && pointsCount > 0 && (
+          {hasUnsavedChanges && points.length > 0 && (
             <span className="absolute top-1 right-1 h-2 w-2 bg-blue-500 rounded-full" />
           )}
         </Button>
@@ -103,7 +108,7 @@ export function Toolbar({
 
         <div className="w-px bg-gray-200 shrink-0" />
 
-        <AuthDialog points={pointsCount} />
+        <AuthDialog points={points} />
 
         <div className="w-px bg-gray-200 shrink-0" />
 

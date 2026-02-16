@@ -7,7 +7,10 @@ export interface Point {
 export interface SavedRoute {
   name: string;
   points: Point[];
-  savedAt: number;
+  savedAt?: number; // Optional for cloud routes
+  id?: string; // Cloud routes have an id
+  createdAt?: string | number; // Cloud routes have createdAt
+  updatedAt?: string | number; // Cloud routes have updatedAt
 }
 
 export interface MapState {
