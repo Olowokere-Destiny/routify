@@ -29,7 +29,7 @@ interface ToolbarProps {
   onSaveDialogOpen: () => void;
 }
 
-export function ToolBar({
+export default function ToolBar({
   canUndo,
   canRedo,
   canClear,

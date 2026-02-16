@@ -20,7 +20,7 @@ import { LocationError } from "./LocationError";
 import { PointsList } from "./PointsList";
 import { RouteIndicator } from "./RouteIndicator";
 import { SaveDialog } from "./SaveDialog";
-import { ToolBar } from "./ToolBar";
+import ToolBar from "./ToolBar";
 
 // Fix for default marker icon in Next.js
 const icon = L.icon({
