@@ -23,7 +23,7 @@ A modern, real-time GPS route tracking and mapping application built with Next.j
 
 1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Olowokere-Destiny/routify.git
 cd routify
 ```
 
