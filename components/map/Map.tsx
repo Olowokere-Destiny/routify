@@ -7,6 +7,7 @@ import {
   Marker,
   Popup,
   Polyline,
+  CircleMarker,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -22,8 +23,8 @@ import { RouteIndicator } from "./RouteIndicator";
 import { SaveDialog } from "./SaveDialog";
 import { ToolBar } from "./ToolBar";
 
-// Fix for default marker icon in Next.js
-const icon = L.icon({
+// Location marker icon (only used for last point)
+const locationIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -57,9 +58,7 @@ export default function Map() {
   // Custom hooks
   useGeolocation();
   const handleAddPoint = useAddPoint();
-  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(
-    setSaveRefreshTrigger,
-  );
+  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(setSaveRefreshTrigger);
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -71,6 +70,8 @@ export default function Map() {
   const canUndo = pastStack.length > 0;
   const canRedo = futureStack.length > 0;
   const canClear = points.length > 0;
+
+  const lastPoint = points.length > 0 ? points[points.length - 1] : null;
 
   // Determine if we're on mobile (for drawer vs dialog)
   useEffect(() => {
@@ -169,16 +170,38 @@ export default function Map() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {userLocation && (
-          <Marker position={userLocation} icon={icon}>
+
+        {/* Show initial location marker only when no points added yet */}
+        {userLocation && points.length === 0 && (
+          <Marker position={userLocation} icon={locationIcon}>
             <Popup>Your current location</Popup>
           </Marker>
         )}
-        {points.map((point, index) => (
-          <Marker key={point.id} position={point.coordinates} icon={icon}>
+
+        {/* Blue dot for all points except the last one */}
+        {points.slice(0, -1).map((point, index) => (
+          <CircleMarker
+            key={point.id}
+            center={point.coordinates}
+            radius={7}
+            pathOptions={{
+              fillColor: "#3b82f6",
+              fillOpacity: 1,
+              color: "#ffffff",
+              weight: 2,
+            }}
+          >
             <Popup>Point {index + 1}</Popup>
-          </Marker>
+          </CircleMarker>
         ))}
+
+        {/* Location marker icon only on the last point */}
+        {lastPoint && (
+          <Marker position={lastPoint.coordinates} icon={locationIcon}>
+            <Popup>Point {points.length} (Latest)</Popup>
+          </Marker>
+        )}
+
         {points.length > 1 && (
           <Polyline
             positions={points.map((point) => point.coordinates)}
