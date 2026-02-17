@@ -58,7 +58,9 @@ export default function Map() {
   // Custom hooks
   useGeolocation();
   const handleAddPoint = useAddPoint();
-  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(setSaveRefreshTrigger);
+  const { handleSaveArea, canSave, hasUnsavedChanges } = useSaveRoute(
+    setSaveRefreshTrigger,
+  );
 
   // Default center (London) - used as fallback
   const defaultCenter: [number, number] = [51.505, -0.09];
@@ -71,6 +73,7 @@ export default function Map() {
   const canRedo = futureStack.length > 0;
   const canClear = points.length > 0;
 
+  // Last point gets the location marker, all others get blue dots
   const lastPoint = points.length > 0 ? points[points.length - 1] : null;
 
   // Determine if we're on mobile (for drawer vs dialog)
@@ -167,6 +170,8 @@ export default function Map() {
       >
         <MapController center={center} />
         <TileLayer
+          maxNativeZoom={19}
+          maxZoom={21}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
@@ -178,12 +183,12 @@ export default function Map() {
           </Marker>
         )}
 
-        {/* Blue dot for all points except the last one */}
-        {points.slice(0, -1).map((point, index) => (
+        {/* Blue dot on the first/starting point (always shown once a point exists) */}
+        {points.length >= 1 && (
           <CircleMarker
-            key={point.id}
-            center={point.coordinates}
-            radius={7}
+            key={points[0].id}
+            center={points[0].coordinates}
+            radius={5}
             pathOptions={{
               fillColor: "#3b82f6",
               fillOpacity: 1,
@@ -191,12 +196,12 @@ export default function Map() {
               weight: 2,
             }}
           >
-            <Popup>Point {index + 1}</Popup>
+            <Popup>Point 1 (Start)</Popup>
           </CircleMarker>
-        ))}
+        )}
 
-        {/* Location marker icon only on the last point */}
-        {lastPoint && (
+        {/* Location marker icon only on the last point when 2+ points exist */}
+        {lastPoint && points.length > 1 && (
           <Marker position={lastPoint.coordinates} icon={locationIcon}>
             <Popup>Point {points.length} (Latest)</Popup>
           </Marker>
