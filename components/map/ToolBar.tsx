@@ -4,8 +4,7 @@ import {
   Redo2,
   Trash2,
   Save,
-  Plus,
-  Loader2,
+  Plus, Loader
 } from "lucide-react";
 import SavedRoutes from "./SavedRoutes";
 import AuthDialog from "./AuthDialog";
@@ -108,7 +107,7 @@ export function ToolBar({
 
         <div className="w-px bg-gray-200 shrink-0" />
 
-        <AuthDialog points={points} />
+        <AuthDialog points={points} isMobile={isMobile} />
 
         <div className="w-px bg-gray-200 shrink-0" />
 
@@ -121,7 +120,7 @@ export function ToolBar({
           title="Add point"
         >
           {isAddingPoint ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader className="h-4 w-4 animate-spin" />
           ) : (
             <>
               <Plus className="h-4 w-4" />

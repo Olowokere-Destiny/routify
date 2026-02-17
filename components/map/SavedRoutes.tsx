@@ -10,10 +10,9 @@ import {
   Folder,
   FolderOpen,
   Cloud,
-  HardDrive,
-  Loader2,
-  RefreshCw,
+  HardDrive, RefreshCw,
   X,
+  Loader
 } from "lucide-react";
 import {
   Dialog,
@@ -23,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { SavedRoute, Point } from "../../lib/types/map";
+import { SavedRoute } from "../../lib/types/map";
 
 interface SavedRoutesProps {
   onLoadRoute: (route: SavedRoute) => void;
@@ -238,7 +237,7 @@ export default function SavedRoutes({
           <div className="max-h-96 overflow-y-auto">
             {loading && cloudRoutes.length === 0 ? (
               <div className="p-8 text-center">
-                <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-2" />
+                <Loader className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-2" />
                 <p className="text-sm text-gray-600">Loading routes...</p>
               </div>
             ) : totalRoutes > 0 ? (
@@ -399,7 +398,7 @@ export default function SavedRoutes({
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
                   Deleting...
                 </>
               ) : (
