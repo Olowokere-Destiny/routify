@@ -24,14 +24,14 @@ export const metadata: Metadata = {
   authors: [{ name: "Routify Team" }],
   creator: "Routify",
   publisher: "Routify",
-  metadataBase: new URL("https://Routify.app"), // TO DO
+  metadataBase: new URL("https://routifygps.vercel.app"), // TO DO
   alternates: {
     canonical: "/"
   },
   openGraph: {
     title: "Routify - GPS Route Mapping & Tracking",
     description: "Create, save, and manage your GPS routes with real-time location tracking. Perfect for runners, hikers, cyclists, and outdoor enthusiasts.",
-    url: "https://Routify.app", // TO DO
+    url: "https://routifygps.vercel.app", // TO DO
     siteName: "Routify",
     images: [
       {
